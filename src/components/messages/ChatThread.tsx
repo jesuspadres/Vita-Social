@@ -18,6 +18,7 @@ import {
   AlertTriangle,
   Ban,
   UserX,
+  Sparkles,
 } from "lucide-react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
@@ -32,6 +33,12 @@ import Animated, {
 import { Avatar } from "@/components/ui/avatar";
 import { MessageBubble } from "@/components/messages/MessageBubble";
 import { AiIcebreaker } from "@/components/messages/AiIcebreaker";
+import { ReportSheet } from "@/components/moderation/ReportSheet";
+import { BlockConfirmSheet } from "@/components/moderation/BlockConfirmSheet";
+import { UnmatchConfirmSheet } from "@/components/moderation/UnmatchConfirmSheet";
+import { UserProfilePage } from "@/components/profile/UserProfilePage";
+import { ConversationInfoPage } from "@/components/messages/ConversationInfoPage";
+import { AiIcebreakerSheet } from "@/components/messages/AiIcebreakerSheet";
 import {
   getMessagesForUser,
   CURRENT_USER_ID,
@@ -131,6 +138,12 @@ export function ChatThread({
   const [inputText, setInputText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [showReportSheet, setShowReportSheet] = useState(false);
+  const [showBlockSheet, setShowBlockSheet] = useState(false);
+  const [showUnmatchSheet, setShowUnmatchSheet] = useState(false);
+  const [showUserProfile, setShowUserProfile] = useState(false);
+  const [showConversationInfo, setShowConversationInfo] = useState(false);
+  const [showAiIcebreaker, setShowAiIcebreaker] = useState(false);
   const flatListRef = useRef<FlatList>(null);
 
   // Slide-in animation
@@ -317,18 +330,31 @@ export function ChatThread({
           </Pressable>
 
           <View style={styles.headerCenter}>
-            <Avatar
-              size="sm"
-              src={user.avatar_url}
-              name={user.first_name}
-              online={user.online}
-            />
-            <View>
+            <Pressable
+              onPress={() => setShowUserProfile(true)}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel={`View ${user.first_name}'s profile`}
+            >
+              <Avatar
+                size="sm"
+                src={user.avatar_url}
+                name={user.first_name}
+                online={user.online}
+              />
+            </Pressable>
+            <Pressable
+              onPress={() => setShowConversationInfo(true)}
+              style={styles.headerNameArea}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel={`View ${user.first_name}'s info`}
+            >
               <Text style={styles.headerName}>{user.first_name}</Text>
               {user.online && (
                 <Text style={styles.headerOnline}>Online</Text>
               )}
-            </View>
+            </Pressable>
           </View>
 
           <Pressable
@@ -359,7 +385,7 @@ export function ChatThread({
           >
             <Pressable
               style={styles.menuItem}
-              onPress={() => setShowMenu(false)}
+              onPress={() => { setShowMenu(false); setShowReportSheet(true); }}
               accessible={true}
               accessibilityRole="button"
               accessibilityLabel={`Report ${user.first_name}`}
@@ -369,7 +395,7 @@ export function ChatThread({
             </Pressable>
             <Pressable
               style={styles.menuItem}
-              onPress={() => setShowMenu(false)}
+              onPress={() => { setShowMenu(false); setShowBlockSheet(true); }}
               accessible={true}
               accessibilityRole="button"
               accessibilityLabel={`Block ${user.first_name}`}
@@ -381,7 +407,7 @@ export function ChatThread({
             </Pressable>
             <Pressable
               style={styles.menuItem}
-              onPress={() => setShowMenu(false)}
+              onPress={() => { setShowMenu(false); setShowUnmatchSheet(true); }}
               accessible={true}
               accessibilityRole="button"
               accessibilityLabel={`Unmatch ${user.first_name}`}
@@ -432,6 +458,17 @@ export function ChatThread({
             { paddingBottom: Math.max(insets.bottom, 12) },
           ]}
         >
+          <Pressable
+            onPress={() => setShowAiIcebreaker(true)}
+            style={styles.sparklesButton}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel="Open AI icebreakers"
+            accessibilityHint="Get AI-generated conversation starters"
+            hitSlop={4}
+          >
+            <Sparkles size={20} color="#4A90A4" strokeWidth={1.75} />
+          </Pressable>
           <TextInput
             value={inputText}
             onChangeText={setInputText}
@@ -455,6 +492,59 @@ export function ChatThread({
           )}
         </View>
       </KeyboardAvoidingView>
+
+      {/* Moderation Sheets */}
+      <ReportSheet
+        visible={showReportSheet}
+        onClose={() => setShowReportSheet(false)}
+        userName={user.first_name}
+        userId={user.id}
+      />
+      <BlockConfirmSheet
+        visible={showBlockSheet}
+        onClose={() => setShowBlockSheet(false)}
+        userName={user.first_name}
+        userAvatar={user.avatar_url ?? ""}
+        onConfirm={() => { setShowBlockSheet(false); handleBack(); }}
+      />
+      <UnmatchConfirmSheet
+        visible={showUnmatchSheet}
+        onClose={() => setShowUnmatchSheet(false)}
+        userName={user.first_name}
+        userAvatar={user.avatar_url ?? ""}
+        onConfirm={() => { setShowUnmatchSheet(false); handleBack(); }}
+      />
+      {showUserProfile && (
+        <UserProfilePage
+          user={{
+            id: user.id,
+            first_name: user.first_name,
+            avatar_url: user.avatar_url ?? "",
+            interests: user.interests,
+            online: user.online,
+          }}
+          onClose={() => setShowUserProfile(false)}
+        />
+      )}
+      {showConversationInfo && (
+        <ConversationInfoPage
+          user={{
+            id: user.id,
+            first_name: user.first_name,
+            avatar_url: user.avatar_url,
+            verification_level: user.verification_level,
+            online: user.online,
+            interests: user.interests,
+          }}
+          onClose={() => setShowConversationInfo(false)}
+        />
+      )}
+      <AiIcebreakerSheet
+        visible={showAiIcebreaker}
+        onClose={() => setShowAiIcebreaker(false)}
+        onSelectSuggestion={(text) => setInputText(text)}
+        userName={user.first_name}
+      />
     </Animated.View>
     </GestureDetector>
   );
@@ -500,6 +590,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 10,
     marginLeft: 8,
+  },
+  headerNameArea: {
+    flex: 1,
+    justifyContent: "center" as const,
   },
   headerName: {
     fontSize: 16,
@@ -638,6 +732,14 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: 22,
     backgroundColor: "#1A365D",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 2,
+  },
+  sparklesButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 2,

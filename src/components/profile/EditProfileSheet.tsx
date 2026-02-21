@@ -242,7 +242,7 @@ export function EditProfileSheet({ visible, onClose }: EditProfileSheetProps) {
 
         {/* Panel */}
         <Animated.View
-          entering={SlideInDown.duration(400).springify().damping(18)}
+          entering={SlideInDown.duration(300)}
           exiting={SlideOutDown.duration(300)}
           style={[
             s.panel,

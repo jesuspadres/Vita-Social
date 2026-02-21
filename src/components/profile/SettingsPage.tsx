@@ -43,6 +43,14 @@ import type { LucideIcon } from "lucide-react-native";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { COLORS } from "@/lib/constants";
+import { AccountSettingsPage } from "@/components/profile/AccountSettingsPage";
+import { PrivacySettingsPage } from "@/components/profile/PrivacySettingsPage";
+import { NotificationSettingsPage } from "@/components/profile/NotificationSettingsPage";
+import { BlockedUsersPage } from "@/components/profile/BlockedUsersPage";
+import { LegalPage } from "@/components/legal/LegalPage";
+import { HelpCenterPage } from "@/components/profile/HelpCenterPage";
+import { GoldSubscriptionPage } from "@/components/profile/GoldSubscriptionPage";
+import { ReportProblemSheet } from "@/components/profile/ReportProblemSheet";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -86,13 +94,7 @@ function MenuItem({
   showChevron?: boolean;
 }) {
   return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [
-        s.menuItem,
-        pressed && { backgroundColor: "#F7FAFC" },
-      ]}
-    >
+    <Pressable onPress={onPress} style={s.menuItem}>
       {Icon && (
         <Icon
           size={18}
@@ -100,12 +102,14 @@ function MenuItem({
           strokeWidth={1.75}
         />
       )}
-      <Text
-        style={[s.menuItemLabel, danger && { color: COLORS.danger }]}
-      >
-        {label}
-      </Text>
-      {value && <Text style={s.menuItemValue}>{value}</Text>}
+      <View style={s.menuItemTextContainer}>
+        <Text
+          style={[s.menuItemLabel, danger && { color: COLORS.danger }]}
+        >
+          {label}
+        </Text>
+        {value && <Text style={s.menuItemValue}>{value}</Text>}
+      </View>
       {showChevron && !danger && (
         <ChevronRight size={16} color="#CBD5E0" />
       )}
@@ -260,6 +264,16 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
   // Delete confirmation
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+  // Sub-pages
+  const [showAccountSettings, setShowAccountSettings] = useState(false);
+  const [showPrivacySettings, setShowPrivacySettings] = useState(false);
+  const [showNotificationSettings, setShowNotificationSettings] = useState(false);
+  const [showBlockedUsers, setShowBlockedUsers] = useState(false);
+  const [showLegal, setShowLegal] = useState<"terms" | "privacy" | "guidelines" | null>(null);
+  const [showHelpCenter, setShowHelpCenter] = useState(false);
+  const [showGoldSubscription, setShowGoldSubscription] = useState(false);
+  const [showReportProblem, setShowReportProblem] = useState(false);
+
   return (
     <GestureDetector gesture={panGesture}>
     <Animated.View style={[s.overlay, slideStyle]}>
@@ -289,14 +303,16 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
           {/* ── Account ── */}
           <SectionHeader title="ACCOUNT" />
           <View style={s.sectionGroup}>
-            <MenuItem Icon={Phone} label="Phone Number" value="***-***-4528" />
+            <MenuItem Icon={Phone} label="Phone Number" value="***-***-4528" onPress={() => setShowAccountSettings(true)} />
             <View style={s.itemDivider} />
-            <MenuItem Icon={Mail} label="Email" value="Add email" />
+            <MenuItem Icon={Mail} label="Email" value="Add email" onPress={() => setShowAccountSettings(true)} />
           </View>
 
           {/* ── Privacy ── */}
           <SectionHeader title="PRIVACY" />
           <View style={s.sectionGroup}>
+            <MenuItem Icon={Shield} label="Privacy & Safety" onPress={() => setShowPrivacySettings(true)} />
+            <View style={s.itemDivider} />
             <ToggleItem
               Icon={Eye}
               label="Discoverable"
@@ -327,6 +343,8 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
           {/* ── Notifications ── */}
           <SectionHeader title="NOTIFICATIONS" />
           <View style={s.sectionGroup}>
+            <MenuItem Icon={Bell} label="Notification Settings" onPress={() => setShowNotificationSettings(true)} />
+            <View style={s.itemDivider} />
             <ToggleItem
               Icon={Bell}
               label="Push Notifications"
@@ -395,6 +413,7 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
                 size="sm"
                 fullWidth
                 iconLeft={<Crown size={14} color="#FFFFFF" />}
+                onPress={() => setShowGoldSubscription(true)}
               >
                 Upgrade to Gold
               </Button>
@@ -404,13 +423,15 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
           {/* ── Support ── */}
           <SectionHeader title="SUPPORT" />
           <View style={s.sectionGroup}>
-            <MenuItem Icon={HelpCircle} label="Help Center" />
+            <MenuItem Icon={HelpCircle} label="Help Center" onPress={() => setShowHelpCenter(true)} />
             <View style={s.itemDivider} />
-            <MenuItem Icon={Flag} label="Report a Problem" />
+            <MenuItem Icon={Flag} label="Report a Problem" onPress={() => setShowReportProblem(true)} />
             <View style={s.itemDivider} />
-            <MenuItem Icon={FileText} label="Terms of Service" />
+            <MenuItem Icon={FileText} label="Terms of Service" onPress={() => setShowLegal("terms")} />
             <View style={s.itemDivider} />
-            <MenuItem Icon={Shield} label="Privacy Policy" />
+            <MenuItem Icon={Shield} label="Privacy Policy" onPress={() => setShowLegal("privacy")} />
+            <View style={s.itemDivider} />
+            <MenuItem Icon={BookOpen} label="Community Guidelines" onPress={() => setShowLegal("guidelines")} />
           </View>
 
           {/* ── Account Actions ── */}
@@ -469,6 +490,41 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
             </View>
           </View>
         </Modal>
+
+        {/* ── Sub-pages ── */}
+        {showAccountSettings && (
+          <AccountSettingsPage onClose={() => setShowAccountSettings(false)} />
+        )}
+        {showPrivacySettings && (
+          <PrivacySettingsPage
+            onClose={() => setShowPrivacySettings(false)}
+            onOpenBlockedUsers={() => {
+              setShowPrivacySettings(false);
+              setShowBlockedUsers(true);
+            }}
+          />
+        )}
+        {showNotificationSettings && (
+          <NotificationSettingsPage onClose={() => setShowNotificationSettings(false)} />
+        )}
+        {showBlockedUsers && (
+          <BlockedUsersPage onClose={() => setShowBlockedUsers(false)} />
+        )}
+        {showLegal && (
+          <LegalPage type={showLegal} onClose={() => setShowLegal(null)} />
+        )}
+        {showHelpCenter && (
+          <HelpCenterPage onClose={() => setShowHelpCenter(false)} />
+        )}
+        {showGoldSubscription && (
+          <GoldSubscriptionPage onClose={() => setShowGoldSubscription(false)} />
+        )}
+
+        {/* Bottom sheets */}
+        <ReportProblemSheet
+          visible={showReportProblem}
+          onClose={() => setShowReportProblem(false)}
+        />
       </View>
     </Animated.View>
     </GestureDetector>
@@ -561,9 +617,12 @@ const s = StyleSheet.create({
     alignItems: "center",
     gap: 12,
     paddingVertical: 14,
+    minHeight: 48,
+  },
+  menuItemTextContainer: {
+    flex: 1,
   },
   menuItemLabel: {
-    flex: 1,
     fontSize: 14,
     fontWeight: "500",
     color: "#111827",
@@ -573,7 +632,7 @@ const s = StyleSheet.create({
     fontSize: 13,
     color: "#A0AEC0",
     fontFamily: "Inter_400Regular",
-    marginRight: 4,
+    marginTop: 2,
   },
 
   // Toggle item

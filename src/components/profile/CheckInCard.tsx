@@ -62,7 +62,7 @@ function CheckInMoment({
         {/* Main photo area */}
         <Animated.View
           style={styles.momentContainer}
-          entering={SlideInUp.duration(350).springify().damping(18)}
+          entering={SlideInUp.duration(300)}
         >
           {hasImage ? (
             <Image

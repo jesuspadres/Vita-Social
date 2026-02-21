@@ -17,13 +17,14 @@ import type { MockFeedPost } from "@/lib/mock-data";
 
 export interface FeedPostProps {
   post: MockFeedPost;
+  onPress?: () => void;
 }
 
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
-export function FeedPost({ post }: FeedPostProps) {
+export function FeedPost({ post, onPress }: FeedPostProps) {
   const [isLiked, setIsLiked] = useState(post.liked);
   const [likeCount, setLikeCount] = useState(post.likes);
 
@@ -48,7 +49,7 @@ export function FeedPost({ post }: FeedPostProps) {
   }, [heartScale]);
 
   return (
-    <View style={styles.container}>
+    <Pressable onPress={onPress} style={styles.container}>
       {/* Source Indicator */}
       {post.source.type === "group" && (
         <View style={styles.sourceBadge}>
@@ -119,7 +120,7 @@ export function FeedPost({ post }: FeedPostProps) {
           <Text style={styles.footerCount}>{post.comments}</Text>
         </View>
       </View>
-    </View>
+    </Pressable>
   );
 }
 

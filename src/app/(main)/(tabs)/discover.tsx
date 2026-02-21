@@ -6,11 +6,13 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
 } from "react-native-reanimated";
-import { Mail } from "lucide-react-native";
+import { Mail, Heart, SlidersHorizontal } from "lucide-react-native";
 import { SwipeDeck } from "@/components/discover/SwipeDeck";
 import { DiscoverGroups } from "@/components/discover/DiscoverGroups";
 import { ThoughtfulPicks } from "@/components/discover/ThoughtfulPicks";
 import { InvitesModal } from "@/components/discover/InvitesModal";
+import { LikesYouScreen } from "@/components/discover/LikesYouScreen";
+import { DiscoveryFiltersSheet } from "@/components/discover/DiscoveryFiltersSheet";
 import { GroupDetail } from "@/components/groups/GroupDetail";
 import { getUnreadInviteCount, type MockGroup } from "@/lib/mock-data";
 
@@ -35,6 +37,8 @@ const TAB_ORDER: Tab[] = ["people", "groups", "picks"];
 export default function DiscoverScreen() {
   const [activeTab, setActiveTab] = useState<Tab>("people");
   const [showInvites, setShowInvites] = useState(false);
+  const [showLikesYou, setShowLikesYou] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<MockGroup | null>(null);
 
   const inviteCount = getUnreadInviteCount();
@@ -76,20 +80,38 @@ export default function DiscoverScreen() {
       <View style={styles.header}>
         <Text style={styles.title}>Vita</Text>
 
-        {/* Invites Button */}
-        <Pressable
-          onPress={() => setShowInvites(true)}
-          style={styles.invitesButton}
-        >
-          <Mail size={22} color="#1A365D" />
-          {inviteCount > 0 && (
-            <View style={styles.invitesBadge}>
-              <Text style={styles.invitesBadgeText}>
-                {inviteCount > 9 ? "9+" : inviteCount}
-              </Text>
-            </View>
-          )}
-        </Pressable>
+        <View style={styles.headerActions}>
+          {/* Filters Button */}
+          <Pressable
+            onPress={() => setShowFilters(true)}
+            style={styles.headerIconButton}
+          >
+            <SlidersHorizontal size={22} color="#1A365D" />
+          </Pressable>
+
+          {/* Likes You Button */}
+          <Pressable
+            onPress={() => setShowLikesYou(true)}
+            style={styles.headerIconButton}
+          >
+            <Heart size={22} color="#1A365D" />
+          </Pressable>
+
+          {/* Invites Button */}
+          <Pressable
+            onPress={() => setShowInvites(true)}
+            style={styles.headerIconButton}
+          >
+            <Mail size={22} color="#1A365D" />
+            {inviteCount > 0 && (
+              <View style={styles.invitesBadge}>
+                <Text style={styles.invitesBadgeText}>
+                  {inviteCount > 9 ? "9+" : inviteCount}
+                </Text>
+              </View>
+            )}
+          </Pressable>
+        </View>
       </View>
 
       {/* Tab Switcher */}
@@ -148,6 +170,20 @@ export default function DiscoverScreen() {
         visible={showInvites}
         onClose={() => setShowInvites(false)}
       />
+
+      {/* Discovery Filters Sheet */}
+      <DiscoveryFiltersSheet
+        visible={showFilters}
+        onClose={() => setShowFilters(false)}
+      />
+
+      {/* Likes You Overlay */}
+      {showLikesYou && (
+        <LikesYouScreen
+          onClose={() => setShowLikesYou(false)}
+          isPremium={false}
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -175,7 +211,12 @@ const styles = StyleSheet.create({
     color: "#1A365D",
     fontFamily: "Inter_700Bold",
   },
-  invitesButton: {
+  headerActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  headerIconButton: {
     width: 44,
     height: 44,
     borderRadius: 22,

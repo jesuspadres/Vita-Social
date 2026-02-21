@@ -20,6 +20,8 @@ import {
   Calendar,
   MapPin,
   Clock,
+  MessageCircle,
+  Plus,
 } from "lucide-react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
@@ -40,14 +42,22 @@ import { Button } from "@/components/ui/button";
 import { HealthRing } from "@/components/ui/health-ring";
 import { GroupFeedPost } from "@/components/groups/GroupFeedPost";
 import { HealthWarningBanner } from "@/components/groups/HealthWarningBanner";
-import { HEALTH_PERIOD_DAYS } from "@/lib/constants";
+import { GroupSettingsPage } from "@/components/groups/GroupSettingsPage";
+import { GroupPostDetail } from "@/components/groups/GroupPostDetail";
+import { GroupChatPage } from "@/components/groups/GroupChatPage";
+import { CreateGroupPostSheet } from "@/components/groups/CreateGroupPostSheet";
+import { UserProfilePage, type UserProfileUser } from "@/components/profile/UserProfilePage";
+import { EventDetailSheet } from "@/components/map/EventDetailSheet";
+import { COLORS, HEALTH_PERIOD_DAYS } from "@/lib/constants";
 import {
   mockGroupPosts,
   mockGroupEvents,
   mockGroupMembers,
   type MockGroup,
+  type MockGroupPost,
   type MockGroupEvent,
   type MockGroupMember,
+  type MockEvent,
 } from "@/lib/mock-data";
 
 // ---------------------------------------------------------------------------
@@ -89,10 +99,11 @@ const roleBadgeVariant = {
 // Sub-Components
 // ---------------------------------------------------------------------------
 
-function EventCard({ event }: { event: MockGroupEvent }) {
+function EventCard({ event, onPress }: { event: MockGroupEvent; onPress?: () => void }) {
   const [rsvpd, setRsvpd] = useState(false);
 
   return (
+    <Pressable onPress={onPress}>
     <Animated.View entering={FadeIn.duration(300)} style={styles.eventCard}>
       <Image
         source={{ uri: event.cover_image }}
@@ -128,14 +139,15 @@ function EventCard({ event }: { event: MockGroupEvent }) {
         </View>
       </View>
     </Animated.View>
+    </Pressable>
   );
 }
 
-function MemberRow({ member }: { member: MockGroupMember }) {
+function MemberRow({ member, onPress }: { member: MockGroupMember; onPress?: () => void }) {
   const daysElapsed = HEALTH_PERIOD_DAYS - member.health_days_remaining;
 
   return (
-    <View style={styles.memberRow}>
+    <Pressable onPress={onPress} style={styles.memberRow}>
       <Avatar
         size="md"
         src={member.user.avatar}
@@ -148,7 +160,7 @@ function MemberRow({ member }: { member: MockGroupMember }) {
         <Badge variant={roleBadgeVariant[member.role]}>{member.role}</Badge>
       </View>
       <HealthRing daysElapsed={Math.max(0, daysElapsed)} size={40} strokeWidth={3} />
-    </View>
+    </Pressable>
   );
 }
 
@@ -189,6 +201,47 @@ function AnimatedTabLabel({
 }
 
 // ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function memberToProfileUser(member: MockGroupMember): UserProfileUser {
+  return {
+    id: member.user.id,
+    first_name: member.user.name,
+    avatar_url: member.user.avatar ?? "",
+    verification_level:
+      member.user.badge === "blue"
+        ? "photo"
+        : member.user.badge === "green"
+          ? "id"
+          : member.user.badge === "gold"
+            ? "gold"
+            : undefined,
+    online: member.user.online,
+  };
+}
+
+function groupEventToMockEvent(event: MockGroupEvent): MockEvent {
+  // Parse the date/time strings into rough ISO dates
+  const now = new Date();
+  return {
+    id: event.id,
+    title: event.title,
+    location_name: event.location,
+    description: event.description,
+    starts_at: now.toISOString(),
+    ends_at: new Date(now.getTime() + 2 * 60 * 60 * 1000).toISOString(),
+    host: { id: "group-host", name: "Group", avatar_url: null, verified: false },
+    attendee_count: event.attendees,
+    max_capacity: null,
+    visibility: "group",
+    distance: 0,
+    pin_x: 50,
+    pin_y: 50,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
@@ -197,6 +250,12 @@ export function GroupDetail({ group, onBack }: GroupDetailProps) {
   const { width: screenWidth } = useWindowDimensions();
   const [activeTab, setActiveTab] = useState<DetailTab>("feed");
   const [tabRowWidth, setTabRowWidth] = useState(0);
+  const [showGroupSettings, setShowGroupSettings] = useState(false);
+  const [showGroupChat, setShowGroupChat] = useState(false);
+  const [showCreatePost, setShowCreatePost] = useState(false);
+  const [selectedPost, setSelectedPost] = useState<MockGroupPost | null>(null);
+  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<MockEvent | null>(null);
 
   // Slide-in animation
   const slideX = useSharedValue(400);
@@ -349,9 +408,24 @@ export function GroupDetail({ group, onBack }: GroupDetailProps) {
               >
                 <ArrowLeft size={20} color="#FFFFFF" />
               </Pressable>
-              <Pressable style={styles.coverButton} hitSlop={8}>
-                <Settings size={20} color="#FFFFFF" />
-              </Pressable>
+              <View style={styles.coverButtonGroup}>
+                <Pressable
+                  style={styles.coverButton}
+                  hitSlop={8}
+                  onPress={() => setShowGroupChat(true)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Group chat"
+                >
+                  <MessageCircle size={20} color="#FFFFFF" />
+                </Pressable>
+                <Pressable
+                  style={styles.coverButton}
+                  hitSlop={8}
+                  onPress={() => setShowGroupSettings(true)}
+                >
+                  <Settings size={20} color="#FFFFFF" />
+                </Pressable>
+              </View>
             </View>
 
             {/* Group name overlay */}
@@ -418,9 +492,13 @@ export function GroupDetail({ group, onBack }: GroupDetailProps) {
               <FlatList
                 data={mockGroupPosts}
                 keyExtractor={(item) => item.id}
-                renderItem={({ item }) => <GroupFeedPost post={item} />}
+                renderItem={({ item }) => (
+                  <Pressable onPress={() => setSelectedPost(item)}>
+                    <GroupFeedPost post={item} />
+                  </Pressable>
+                )}
                 showsVerticalScrollIndicator={false}
-                contentContainerStyle={{ paddingBottom: 32 }}
+                contentContainerStyle={{ paddingBottom: 80 }}
               />
             </View>
 
@@ -429,7 +507,12 @@ export function GroupDetail({ group, onBack }: GroupDetailProps) {
               <FlatList
                 data={mockGroupEvents}
                 keyExtractor={(item) => item.id}
-                renderItem={({ item }) => <EventCard event={item} />}
+                renderItem={({ item }) => (
+                  <EventCard
+                    event={item}
+                    onPress={() => setSelectedEvent(groupEventToMockEvent(item))}
+                  />
+                )}
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: 32 }}
               />
@@ -440,7 +523,12 @@ export function GroupDetail({ group, onBack }: GroupDetailProps) {
               <FlatList
                 data={mockGroupMembers}
                 keyExtractor={(item) => item.user.id}
-                renderItem={({ item }) => <MemberRow member={item} />}
+                renderItem={({ item }) => (
+                  <MemberRow
+                    member={item}
+                    onPress={() => setSelectedMemberId(item.user.id)}
+                  />
+                )}
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{ padding: 16, gap: 8, paddingBottom: 32 }}
               />
@@ -448,6 +536,82 @@ export function GroupDetail({ group, onBack }: GroupDetailProps) {
           </Animated.View>
         </Animated.View>
       </GestureDetector>
+
+      {/* FAB for creating post */}
+      <Pressable
+        onPress={() => setShowCreatePost(true)}
+        style={styles.fab}
+        accessibilityRole="button"
+        accessibilityLabel="Create new post"
+      >
+        <Plus size={24} color="#FFFFFF" />
+      </Pressable>
+
+      {/* Group Settings Overlay */}
+      {showGroupSettings && (
+        <GroupSettingsPage
+          group={group}
+          onClose={() => setShowGroupSettings(false)}
+        />
+      )}
+
+      {/* Group Chat Overlay */}
+      {showGroupChat && (
+        <GroupChatPage
+          group={{
+            id: group.id,
+            name: group.name,
+            avatar_url: group.cover_image,
+            member_count: group.member_count,
+          }}
+          onClose={() => setShowGroupChat(false)}
+        />
+      )}
+
+      {/* Post Detail Overlay */}
+      {selectedPost && (
+        <GroupPostDetail
+          post={{
+            id: selectedPost.id,
+            author: {
+              name: selectedPost.user.name,
+              avatar_url: selectedPost.user.avatar ?? "",
+            },
+            body: selectedPost.content,
+            image_url: selectedPost.image,
+            likes: selectedPost.likes,
+            comments: selectedPost.comments,
+            created_at: selectedPost.timestamp,
+          }}
+          onClose={() => setSelectedPost(null)}
+        />
+      )}
+
+      {/* Create Post Sheet */}
+      <CreateGroupPostSheet
+        visible={showCreatePost}
+        onClose={() => setShowCreatePost(false)}
+        groupName={group.name}
+      />
+
+      {/* Event Detail Sheet */}
+      <EventDetailSheet
+        event={selectedEvent}
+        onClose={() => setSelectedEvent(null)}
+        onCheckIn={() => setSelectedEvent(null)}
+      />
+
+      {/* Member Profile Overlay */}
+      {selectedMemberId != null && (() => {
+        const member = mockGroupMembers.find((m) => m.user.id === selectedMemberId);
+        if (!member) return null;
+        return (
+          <UserProfilePage
+            user={memberToProfileUser(member)}
+            onClose={() => setSelectedMemberId(null)}
+          />
+        );
+      })()}
     </Animated.View>
   );
 }
@@ -489,6 +653,10 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.35)",
     alignItems: "center",
     justifyContent: "center",
+  },
+  coverButtonGroup: {
+    flexDirection: "row",
+    gap: 8,
   },
   coverNameContainer: {
     position: "absolute",
@@ -633,5 +801,24 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#1A365D",
     fontFamily: "Inter_600SemiBold",
+  },
+
+  // FAB
+  fab: {
+    position: "absolute",
+    bottom: 24,
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: COLORS.primary,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 6,
+    zIndex: 40,
   },
 });

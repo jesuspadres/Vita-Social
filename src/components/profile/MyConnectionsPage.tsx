@@ -27,6 +27,7 @@ import {
   MessageCircle,
 } from "lucide-react-native";
 import { Avatar } from "@/components/ui/avatar";
+import { UserProfilePage, type UserProfileUser } from "@/components/profile/UserProfilePage";
 import { COLORS } from "@/lib/constants";
 import {
   CURRENT_USER_CONNECTIONS,
@@ -71,15 +72,20 @@ const filters: { key: Filter; label: string }[] = [
 function ConnectionCard({
   item,
   index,
+  onPress,
+  onMessage,
 }: {
   item: MockConnection;
   index: number;
+  onPress: () => void;
+  onMessage: () => void;
 }) {
   const via = viaConfig[item.connectedVia];
 
   return (
     <Animated.View entering={FadeInUp.duration(350).delay(index * 50)}>
       <Pressable
+        onPress={onPress}
         style={({ pressed }) => [
           styles.card,
           pressed && styles.cardPressed,
@@ -109,7 +115,11 @@ function ConnectionCard({
             </View>
           </View>
 
-          <Pressable style={styles.messageBtn} hitSlop={8}>
+          <Pressable
+            onPress={onMessage}
+            style={styles.messageBtn}
+            hitSlop={8}
+          >
             <MessageCircle size={18} color={COLORS.secondary} />
           </Pressable>
         </View>
@@ -141,9 +151,27 @@ function ConnectionCard({
 // Main Component
 // ---------------------------------------------------------------------------
 
+/** Build a UserProfileUser from a MockConnection for the profile overlay. */
+function connectionToProfileUser(c: MockConnection): UserProfileUser {
+  return {
+    id: c.id,
+    first_name: c.firstName,
+    avatar_url: c.avatarUrl ?? "",
+    interests: c.interests,
+    verification_level:
+      c.verificationLevel === "id"
+        ? "id"
+        : c.verificationLevel === "photo"
+          ? "photo"
+          : undefined,
+    online: c.online,
+  };
+}
+
 export function MyConnectionsPage({ onClose }: MyConnectionsPageProps) {
   const insets = useSafeAreaInsets();
   const [activeFilter, setActiveFilter] = useState<Filter>("all");
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
   // Slide-in animation
   const translateX = useSharedValue(SCREEN_WIDTH);
@@ -199,12 +227,23 @@ export function MyConnectionsPage({ onClose }: MyConnectionsPageProps) {
 
   const renderItem = useCallback(
     ({ item, index }: { item: MockConnection; index: number }) => (
-      <ConnectionCard item={item} index={index} />
+      <ConnectionCard
+        item={item}
+        index={index}
+        onPress={() => setSelectedUserId(item.id)}
+        onMessage={() => setSelectedUserId(item.id)}
+      />
     ),
     [],
   );
 
+  // Derive the selected connection for UserProfilePage
+  const selectedConnection = selectedUserId
+    ? CURRENT_USER_CONNECTIONS.find((c) => c.id === selectedUserId) ?? null
+    : null;
+
   return (
+    <React.Fragment>
     <GestureDetector gesture={panGesture}>
       <Animated.View style={[styles.overlay, slideStyle]}>
         <View style={[styles.root, { paddingTop: insets.top }]}>
@@ -272,6 +311,15 @@ export function MyConnectionsPage({ onClose }: MyConnectionsPageProps) {
         </View>
       </Animated.View>
     </GestureDetector>
+
+    {/* User Profile Overlay */}
+    {selectedConnection && (
+      <UserProfilePage
+        user={connectionToProfileUser(selectedConnection)}
+        onClose={() => setSelectedUserId(null)}
+      />
+    )}
+    </React.Fragment>
   );
 }
 

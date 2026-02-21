@@ -32,11 +32,14 @@ import {
 } from "lucide-react-native";
 import { Fab } from "@/components/ui/fab";
 import { CreateEventSheet } from "@/components/map/CreateEventSheet";
+import { EventDetailSheet } from "@/components/map/EventDetailSheet";
 import { COLORS } from "@/lib/constants";
 import {
   CURRENT_USER_EVENTS,
   CURRENT_USER_UPCOMING_EVENTS,
+  CURRENT_USER_ID,
   type MockUserEvent,
+  type MockEvent,
 } from "@/lib/mock-data";
 
 // ---------------------------------------------------------------------------
@@ -141,6 +144,36 @@ function AnimatedTabLabel({
 }
 
 // ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/** Convert a simplified MockUserEvent into a full MockEvent for EventDetailSheet. */
+function userEventToMockEvent(item: MockUserEvent): MockEvent {
+  const startsAt = new Date(item.date);
+  const endsAt = new Date(startsAt.getTime() + 2 * 60 * 60 * 1000); // +2h default
+  return {
+    id: item.id,
+    title: item.title,
+    location_name: item.locationName,
+    description: `Event at ${item.locationName}`,
+    starts_at: startsAt.toISOString(),
+    ends_at: endsAt.toISOString(),
+    host: {
+      id: CURRENT_USER_ID,
+      name: "You",
+      avatar_url: null,
+      verified: false,
+    },
+    attendee_count: item.attendeeCount,
+    max_capacity: null,
+    visibility: "public",
+    distance: 0,
+    pin_x: 50,
+    pin_y: 50,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Event Card
 // ---------------------------------------------------------------------------
 
@@ -148,14 +181,17 @@ function EventCard({
   item,
   index,
   isUpcoming,
+  onPress,
 }: {
   item: MockUserEvent;
   index: number;
   isUpcoming: boolean;
+  onPress: () => void;
 }) {
   return (
     <Animated.View entering={FadeInUp.duration(300).delay(index * 50)}>
       <Pressable
+        onPress={onPress}
         style={({ pressed }) => [
           styles.card,
           pressed && styles.cardPressed,
@@ -221,6 +257,7 @@ export function MyEventsPage({ onClose }: MyEventsPageProps) {
   const { width: SCREEN_W } = useWindowDimensions();
   const [activeTab, setActiveTab] = useState<Tab>("upcoming");
   const [showCreateEvent, setShowCreateEvent] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<MockEvent | null>(null);
 
   // Tab pill layout
   const [pillContainerWidth, setPillContainerWidth] = useState(0);
@@ -349,18 +386,22 @@ export function MyEventsPage({ onClose }: MyEventsPageProps) {
   // Tab data
   const tabData = [CURRENT_USER_UPCOMING_EVENTS, CURRENT_USER_EVENTS];
 
+  const handleEventPress = useCallback((item: MockUserEvent) => {
+    setSelectedEvent(userEventToMockEvent(item));
+  }, []);
+
   const renderUpcomingItem = useCallback(
     ({ item, index }: { item: MockUserEvent; index: number }) => (
-      <EventCard item={item} index={index} isUpcoming />
+      <EventCard item={item} index={index} isUpcoming onPress={() => handleEventPress(item)} />
     ),
-    [],
+    [handleEventPress],
   );
 
   const renderPastItem = useCallback(
     ({ item, index }: { item: MockUserEvent; index: number }) => (
-      <EventCard item={item} index={index} isUpcoming={false} />
+      <EventCard item={item} index={index} isUpcoming={false} onPress={() => handleEventPress(item)} />
     ),
-    [],
+    [handleEventPress],
   );
 
   const renderItems = [renderUpcomingItem, renderPastItem];
@@ -458,6 +499,13 @@ export function MyEventsPage({ onClose }: MyEventsPageProps) {
         <CreateEventSheet
           visible={showCreateEvent}
           onClose={() => setShowCreateEvent(false)}
+        />
+
+        {/* Event Detail Sheet */}
+        <EventDetailSheet
+          event={selectedEvent}
+          onClose={() => setSelectedEvent(null)}
+          onCheckIn={() => setSelectedEvent(null)}
         />
       </Animated.View>
     </GestureDetector>

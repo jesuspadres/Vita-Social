@@ -19,6 +19,7 @@ import { Fab } from "@/components/ui/fab";
 import { GroupCard } from "@/components/groups/GroupCard";
 import { GroupDetail } from "@/components/groups/GroupDetail";
 import { CreateGroupSheet } from "@/components/groups/CreateGroupSheet";
+import { GroupSearchPage } from "@/components/groups/GroupSearchPage";
 import {
   mockGroups,
   groupCategories,
@@ -41,6 +42,7 @@ export default function GroupsScreen() {
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [selectedGroup, setSelectedGroup] = useState<MockGroup | null>(null);
   const [showCreateGroup, setShowCreateGroup] = useState(false);
+  const [showSearchPage, setShowSearchPage] = useState(false);
 
   // Animated pill position: 0 = My Groups, 1 = Discover
   const pillTranslateX = useSharedValue(0);
@@ -125,6 +127,15 @@ export default function GroupsScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.title}>Groups</Text>
+        <Pressable
+          onPress={() => setShowSearchPage(true)}
+          hitSlop={8}
+          style={styles.searchHeaderButton}
+          accessibilityRole="button"
+          accessibilityLabel="Search groups"
+        >
+          <Search size={22} color="#1A365D" />
+        </Pressable>
       </View>
 
       {/* Tab Switcher */}
@@ -301,6 +312,11 @@ export default function GroupsScreen() {
         visible={showCreateGroup}
         onClose={() => setShowCreateGroup(false)}
       />
+
+      {/* Group Search Page Overlay */}
+      {showSearchPage && (
+        <GroupSearchPage onClose={() => setShowSearchPage(false)} />
+      )}
     </SafeAreaView>
   );
 }
@@ -315,9 +331,19 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
   },
   header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: 16,
     paddingTop: 8,
     paddingBottom: 8,
+  },
+  searchHeaderButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
   },
   title: {
     fontSize: 28,

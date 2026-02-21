@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   Modal,
   Pressable,
   ScrollView,
+  Share,
   StyleSheet,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -17,9 +18,12 @@ import {
   Share2,
   CheckCircle,
   Calendar,
+  Pencil,
 } from "lucide-react-native";
 import { format } from "date-fns";
-import { MOCK_ATTENDEES, type MockEvent } from "@/lib/mock-data";
+import { MOCK_ATTENDEES, CURRENT_USER_ID, type MockEvent } from "@/lib/mock-data";
+import { EventAttendeesSheet, MOCK_EVENT_ATTENDEES } from "@/components/map/EventAttendeesSheet";
+import { EditEventSheet } from "@/components/map/EditEventSheet";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -54,7 +58,12 @@ interface EventDetailSheetProps {
 // ---------------------------------------------------------------------------
 
 export function EventDetailSheet({ event, onClose, onCheckIn }: EventDetailSheetProps) {
+  const [showAttendees, setShowAttendees] = useState(false);
+  const [showEditEvent, setShowEditEvent] = useState(false);
+
   if (!event) return null;
+
+  const isHost = event.host.id === CURRENT_USER_ID || event.host.name === "Maya Chen";
 
   const live = isLive(event);
   const vis = VISIBILITY_LABELS[event.visibility] ?? VISIBILITY_LABELS.public;
@@ -185,7 +194,10 @@ export function EventDetailSheet({ event, onClose, onCheckIn }: EventDetailSheet
             )}
 
             {/* Stacked Attendee Avatars */}
-            <View style={styles.attendeesRow}>
+            <Pressable
+              onPress={() => setShowAttendees(true)}
+              style={styles.attendeesRow}
+            >
               {displayAttendees.map((attendee, i) => (
                 <Image
                   key={attendee.id}
@@ -201,7 +213,8 @@ export function EventDetailSheet({ event, onClose, onCheckIn }: EventDetailSheet
                   <Text style={styles.attendeeExtraText}>+{extraAttendees}</Text>
                 </View>
               )}
-            </View>
+              <Text style={styles.viewAllText}>View all &rarr;</Text>
+            </Pressable>
 
             {/* Description */}
             <Text style={styles.description}>{event.description}</Text>
@@ -218,18 +231,57 @@ export function EventDetailSheet({ event, onClose, onCheckIn }: EventDetailSheet
                 <Text style={styles.checkInText}>Check In</Text>
               </Pressable>
             )}
+            {isHost && (
+              <Pressable
+                style={styles.editBtn}
+                onPress={() => setShowEditEvent(true)}
+              >
+                <Pencil size={18} color="#4A90A4" />
+                <Text style={styles.editBtnText}>Edit</Text>
+              </Pressable>
+            )}
             <Pressable
               style={[styles.rsvpBtn, live && { flex: 1 }]}
             >
               <Calendar size={18} color="#4A90A4" />
               <Text style={styles.rsvpText}>RSVP</Text>
             </Pressable>
-            <Pressable style={styles.shareBtn}>
+            <Pressable
+              style={styles.shareBtn}
+              onPress={async () => {
+                try {
+                  await Share.share({
+                    message: `Check out "${event.title}" on Vita!\n${event.location_name}\n${new Date(event.starts_at).toLocaleDateString()}`,
+                  });
+                } catch {}
+              }}
+            >
               <Share2 size={18} color="#4A5568" />
             </Pressable>
           </View>
         </SafeAreaView>
       </View>
+
+      <EventAttendeesSheet
+        visible={showAttendees}
+        onClose={() => setShowAttendees(false)}
+        attendees={MOCK_EVENT_ATTENDEES}
+        totalCount={event.attendee_count}
+      />
+
+      <EditEventSheet
+        visible={showEditEvent}
+        onClose={() => setShowEditEvent(false)}
+        event={{
+          title: event.title,
+          description: event.description,
+          starts_at: event.starts_at,
+          ends_at: event.ends_at,
+          location_name: event.location_name,
+          visibility: event.visibility,
+          max_capacity: event.max_capacity,
+        }}
+      />
     </Modal>
   );
 }
@@ -446,6 +498,13 @@ const styles = StyleSheet.create({
     color: "#4A5568",
     fontFamily: "Inter_700Bold",
   },
+  viewAllText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#4A90A4",
+    fontFamily: "Inter_600SemiBold",
+    marginLeft: 8,
+  },
   // Description
   description: {
     fontSize: 14,
@@ -483,6 +542,22 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#FFFFFF",
     fontFamily: "Inter_700Bold",
+  },
+  editBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 14,
+    borderRadius: 14,
+    backgroundColor: "rgba(74,144,164,0.1)",
+  },
+  editBtnText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#3A7487",
+    fontFamily: "Inter_600SemiBold",
   },
   rsvpBtn: {
     flex: 1,

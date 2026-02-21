@@ -23,6 +23,7 @@ import * as Haptics from "expo-haptics";
 import { Newspaper } from "lucide-react-native";
 import { Fab } from "@/components/ui/fab";
 import { FeedPost } from "@/components/feed/FeedPost";
+import { FeedPostDetailPage } from "@/components/feed/FeedPostDetailPage";
 import { CreatePostSheet } from "@/components/feed/CreatePostSheet";
 import { mockFeedPosts, type MockFeedPost } from "@/lib/mock-data";
 
@@ -91,6 +92,7 @@ export default function FeedScreen() {
   const [activeTab, setActiveTab] = useState<FeedTab>("all");
   const [refreshing, setRefreshing] = useState(false);
   const [showCreatePost, setShowCreatePost] = useState(false);
+  const [selectedPost, setSelectedPost] = useState<MockFeedPost | null>(null);
 
   // Tab pill layout
   const [pillContainerWidth, setPillContainerWidth] = useState(0);
@@ -205,7 +207,9 @@ export default function FeedScreen() {
   // ── Renderers ──
 
   const renderItem = useCallback(
-    ({ item }: { item: MockFeedPost }) => <FeedPost post={item} />,
+    ({ item }: { item: MockFeedPost }) => (
+      <FeedPost post={item} onPress={() => setSelectedPost(item)} />
+    ),
     [],
   );
 
@@ -292,6 +296,14 @@ export default function FeedScreen() {
         visible={showCreatePost}
         onClose={() => setShowCreatePost(false)}
       />
+
+      {/* Post Detail Overlay */}
+      {selectedPost && (
+        <FeedPostDetailPage
+          post={selectedPost}
+          onClose={() => setSelectedPost(null)}
+        />
+      )}
     </SafeAreaView>
   );
 }

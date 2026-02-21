@@ -2564,3 +2564,35 @@ export const dailyPicks: DailyPick[] = [
       "You both enjoy Yoga and Hiking, and Elena has attended 20 events -- one of the most active people nearby.",
   },
 ];
+
+// ---------------------------------------------------------------------------
+// Mock Notifications
+// ---------------------------------------------------------------------------
+
+export interface MockNotification {
+  id: string;
+  type: "match" | "message" | "event_reminder" | "group_invite" | "health_warning" | "checkin_reminder";
+  title: string;
+  body: string;
+  timestamp: string;
+  read: boolean;
+  /** Optional navigation target data */
+  data?: { userId?: string; eventId?: string; groupId?: string };
+}
+
+export const MOCK_NOTIFICATIONS: MockNotification[] = [
+  // Today
+  { id: "notif-1", type: "match", title: "New Connection!", body: "You and Sofia matched! Start a conversation.", timestamp: new Date(Date.now() - 2 * 3600000).toISOString(), read: false, data: { userId: "sofia-1" } },
+  { id: "notif-2", type: "message", title: "Amara sent a message", body: "Hey! Are you coming to the hike this weekend?", timestamp: new Date(Date.now() - 4 * 3600000).toISOString(), read: false, data: { userId: "amara-1" } },
+  { id: "notif-3", type: "event_reminder", title: "Event starting soon", body: "Sunset Yoga in the Park starts in 2 hours", timestamp: new Date(Date.now() - 5 * 3600000).toISOString(), read: true, data: { eventId: "event-1" } },
+  // Yesterday
+  { id: "notif-4", type: "group_invite", title: "Group invitation", body: "Sarah invited you to join Jazz After Dark", timestamp: new Date(Date.now() - 28 * 3600000).toISOString(), read: true, data: { groupId: "group-5" } },
+  { id: "notif-5", type: "health_warning", title: "Health ring cooling", body: "Your Trail Runners PDX ring is at 32 days. Attend an event to stay active!", timestamp: new Date(Date.now() - 30 * 3600000).toISOString(), read: false, data: { groupId: "group-1" } },
+  { id: "notif-6", type: "checkin_reminder", title: "Don't forget to check in!", body: "Coffee Tasting Workshop is happening now. Check in to keep your streak!", timestamp: new Date(Date.now() - 32 * 3600000).toISOString(), read: true, data: { eventId: "event-3" } },
+  // This week
+  { id: "notif-7", type: "match", title: "New Connection!", body: "You and Marcus matched! Say hello.", timestamp: new Date(Date.now() - 3 * 86400000).toISOString(), read: true, data: { userId: "marcus-1" } },
+  { id: "notif-8", type: "message", title: "Kai sent a message", body: "That concert was amazing! We should go again", timestamp: new Date(Date.now() - 4 * 86400000).toISOString(), read: true, data: { userId: "kai-1" } },
+  // Earlier
+  { id: "notif-9", type: "event_reminder", title: "Event recap", body: "You attended Board Game Night! Rate your experience.", timestamp: new Date(Date.now() - 8 * 86400000).toISOString(), read: true, data: { eventId: "event-5" } },
+  { id: "notif-10", type: "group_invite", title: "Group invitation", body: "You were invited to Sunrise Yoga Collective", timestamp: new Date(Date.now() - 12 * 86400000).toISOString(), read: true, data: { groupId: "group-9" } },
+];

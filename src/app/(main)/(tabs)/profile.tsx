@@ -27,9 +27,11 @@ import {
   Users,
   Calendar,
   Settings,
+  Bell,
   MapPin,
   FileText,
   ShieldCheck,
+  Search,
 } from "lucide-react-native";
 import { Card } from "@/components/ui/card";
 import { HealthRing } from "@/components/ui/health-ring";
@@ -37,6 +39,7 @@ import {
   CURRENT_USER_PROFILE,
   CURRENT_USER_PROFILE_POSTS,
   CURRENT_USER_CHECKINS,
+  type MockProfilePost,
 } from "@/lib/mock-data";
 import { COLORS } from "@/lib/constants";
 import { EditProfileSheet } from "@/components/profile/EditProfileSheet";
@@ -51,7 +54,15 @@ import {
   type ProfileTab,
 } from "@/components/profile/ProfileTabBar";
 import { ProfilePostCard } from "@/components/profile/ProfilePostCard";
+import { FeedPostDetailPage } from "@/components/feed/FeedPostDetailPage";
 import { CheckInCard } from "@/components/profile/CheckInCard";
+import { NotificationsPage } from "@/components/notifications/NotificationsPage";
+import { HealthRingDetailPage } from "@/components/profile/HealthRingDetailPage";
+import { GoldSubscriptionPage } from "@/components/profile/GoldSubscriptionPage";
+import { GlobalSearchPage } from "@/components/search/GlobalSearchPage";
+import { VerificationFlowPage } from "@/components/profile/VerificationFlowPage";
+import type { VerificationFlowTier } from "@/components/profile/VerificationFlowPage";
+import type { VerificationTier } from "@/components/profile/VerificationCard";
 
 // ---------------------------------------------------------------------------
 // Interest chip color cycling
@@ -118,6 +129,13 @@ export default function ProfileScreen() {
   const [showConnections, setShowConnections] = useState(false);
   const [showGroups, setShowGroups] = useState(false);
   const [showEvents, setShowEvents] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showHealthRing, setShowHealthRing] = useState(false);
+  const [showGoldSubscription, setShowGoldSubscription] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+  const [showVerification, setShowVerification] = useState(false);
+  const [verificationTier, setVerificationTier] = useState<VerificationFlowTier>("blue");
+  const [selectedPost, setSelectedPost] = useState<MockProfilePost | null>(null);
   const [activeTab, setActiveTab] = useState<ProfileTab>("posts");
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
   const photoListRef = useRef<FlatList>(null);
@@ -148,11 +166,16 @@ export default function ProfileScreen() {
   );
 
   const handleGoldTrial = useCallback(() => {
-    // Mock: no-op in prototype
+    setShowGoldSubscription(true);
   }, []);
 
-  const handleVerificationUpgrade = useCallback(() => {
-    // Mock: no-op in prototype
+  const handleVerificationUpgrade = useCallback((nextTier: VerificationTier) => {
+    if (nextTier === "blue" || nextTier === "green" || nextTier === "gold") {
+      setVerificationTier(nextTier);
+    } else {
+      setVerificationTier("blue");
+    }
+    setShowVerification(true);
   }, []);
 
   // Pan gesture for swiping between tabs
@@ -251,14 +274,30 @@ export default function ProfileScreen() {
               </View>
             </View>
 
-            {/* Settings button */}
-            <Pressable
-              onPress={() => setShowSettings(true)}
-              style={s.settingsBtn}
-              hitSlop={8}
-            >
-              <Settings size={20} color="#FFFFFF" />
-            </Pressable>
+            {/* Top-right buttons */}
+            <View style={s.topRightButtons}>
+              <Pressable
+                onPress={() => setShowSearch(true)}
+                style={s.settingsBtn}
+                hitSlop={8}
+              >
+                <Search size={20} color="#FFFFFF" />
+              </Pressable>
+              <Pressable
+                onPress={() => setShowNotifications(true)}
+                style={s.settingsBtn}
+                hitSlop={8}
+              >
+                <Bell size={20} color="#FFFFFF" />
+              </Pressable>
+              <Pressable
+                onPress={() => setShowSettings(true)}
+                style={s.settingsBtn}
+                hitSlop={8}
+              >
+                <Settings size={20} color="#FFFFFF" />
+              </Pressable>
+            </View>
 
             {/* Dot indicators */}
             {photos.length > 1 && (
@@ -351,7 +390,7 @@ export default function ProfileScreen() {
               <View style={[s.tabPage, { width: SCREEN_W }]}>
                 {CURRENT_USER_PROFILE_POSTS.length > 0 ? (
                   CURRENT_USER_PROFILE_POSTS.map((post, i) => (
-                    <ProfilePostCard key={post.id} post={post} index={i} />
+                    <ProfilePostCard key={post.id} post={post} index={i} onPress={() => setSelectedPost(post)} />
                   ))
                 ) : (
                   <View style={s.emptyContainer}>
@@ -414,13 +453,22 @@ export default function ProfileScreen() {
                 <View style={s.section}>
                   <View style={s.sectionHeaderRow}>
                     <Text style={s.sectionHeading}>My Groups</Text>
-                    <Pressable
-                      hitSlop={8}
-                      style={s.seeAllBtn}
-                      onPress={() => setShowGroups(true)}
-                    >
-                      <Text style={s.seeAllText}>See all</Text>
-                    </Pressable>
+                    <View style={s.sectionHeaderActions}>
+                      <Pressable
+                        hitSlop={8}
+                        style={s.seeAllBtn}
+                        onPress={() => setShowHealthRing(true)}
+                      >
+                        <Text style={s.healthRingLink}>Health</Text>
+                      </Pressable>
+                      <Pressable
+                        hitSlop={8}
+                        style={s.seeAllBtn}
+                        onPress={() => setShowGroups(true)}
+                      >
+                        <Text style={s.seeAllText}>See all</Text>
+                      </Pressable>
+                    </View>
                   </View>
                   <FlatList<MiniGroupItem>
                     horizontal
@@ -476,6 +524,38 @@ export default function ProfileScreen() {
       {showEvents && (
         <MyEventsPage
           onClose={() => setShowEvents(false)}
+        />
+      )}
+      {showNotifications && (
+        <NotificationsPage
+          onClose={() => setShowNotifications(false)}
+        />
+      )}
+      {showHealthRing && (
+        <HealthRingDetailPage
+          onClose={() => setShowHealthRing(false)}
+        />
+      )}
+      {showGoldSubscription && (
+        <GoldSubscriptionPage
+          onClose={() => setShowGoldSubscription(false)}
+        />
+      )}
+      {showSearch && (
+        <GlobalSearchPage
+          onClose={() => setShowSearch(false)}
+        />
+      )}
+      {showVerification && (
+        <VerificationFlowPage
+          tier={verificationTier}
+          onClose={() => setShowVerification(false)}
+        />
+      )}
+      {selectedPost && (
+        <FeedPostDetailPage
+          post={selectedPost}
+          onClose={() => setSelectedPost(null)}
         />
       )}
     </SafeAreaView>
@@ -653,6 +733,11 @@ const s = StyleSheet.create({
     alignItems: "center",
     marginBottom: 12,
   },
+  sectionHeaderActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
   seeAllBtn: {
     minHeight: 44,
     justifyContent: "center",
@@ -662,6 +747,12 @@ const s = StyleSheet.create({
     fontSize: 13,
     fontWeight: "600",
     color: "#3A7487",
+    fontFamily: "Inter_600SemiBold",
+  },
+  healthRingLink: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: COLORS.success,
     fontFamily: "Inter_600SemiBold",
   },
 
@@ -708,18 +799,22 @@ const s = StyleSheet.create({
     fontFamily: "Inter_400Regular",
   },
 
-  // Settings button (top-right on photo)
-  settingsBtn: {
+  // Top-right buttons on photo
+  topRightButtons: {
     position: "absolute",
     top: 12,
     right: 12,
+    flexDirection: "row",
+    gap: 8,
+    zIndex: 5,
+  },
+  settingsBtn: {
     width: 40,
     height: 40,
     borderRadius: 20,
     backgroundColor: "rgba(0,0,0,0.35)",
     alignItems: "center",
     justifyContent: "center",
-    zIndex: 5,
   },
 
   // Check-in grid

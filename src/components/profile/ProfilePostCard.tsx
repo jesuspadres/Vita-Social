@@ -27,13 +27,14 @@ import type { MockProfilePost } from "@/lib/mock-data";
 export interface ProfilePostCardProps {
   post: MockProfilePost;
   index: number;
+  onPress?: () => void;
 }
 
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
-export function ProfilePostCard({ post, index }: ProfilePostCardProps) {
+export function ProfilePostCard({ post, index, onPress }: ProfilePostCardProps) {
   const [isLiked, setIsLiked] = useState(post.liked);
   const [likeCount, setLikeCount] = useState(post.likes);
 
@@ -59,7 +60,7 @@ export function ProfilePostCard({ post, index }: ProfilePostCardProps) {
 
   return (
     <Animated.View entering={FadeInUp.duration(400).delay(index * 80)}>
-      <View style={styles.container}>
+      <Pressable onPress={onPress} style={styles.container}>
         {/* ── Check-in badge ── */}
         {post.type === "checkin" && post.checkin && (
           <View style={styles.checkinBadge}>
@@ -184,7 +185,7 @@ export function ProfilePostCard({ post, index }: ProfilePostCardProps) {
 
           <Text style={styles.timestamp}>{post.timestamp}</Text>
         </View>
-      </View>
+      </Pressable>
     </Animated.View>
   );
 }
