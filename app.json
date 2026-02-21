@@ -1,0 +1,62 @@
+{
+  "expo": {
+    "name": "Vita",
+    "slug": "vita-app",
+    "version": "0.1.0",
+    "scheme": "vita",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "backgroundColor": "#1A365D"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.vita.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Vita needs your location to show nearby events and enable GPS check-in.",
+        "NSCameraUsageDescription": "Vita needs camera access for profile photos.",
+        "NSPhotoLibraryUsageDescription": "Vita needs photo library access for profile photos."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#1A365D"
+      },
+      "package": "com.vita.app",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE"
+      ]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-font",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Vita needs your location to show nearby events and enable GPS check-in."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Vita needs access to your photos for your profile."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

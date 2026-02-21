@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx create-next-app@latest:*)",
+      "Bash(npm install:*)",
+      "Bash(npx next build:*)",
+      "Bash(pip install:*)",
+      "Bash(python -c:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm ls:*)",
+      "Bash(if exist package-lock.json del /q package-lock.json)",
+      "Bash(if exist node_modules rmdir /s /q node_modules)",
+      "Bash(npx expo export:*)",
+      "Bash(npx expo install:*)",
+      "Bash(node -e:*)",
+      "Bash(npm info:*)",
+      "WebFetch(domain:docs.rork.com)",
+      "WebFetch(domain:rork.com)",
+      "Bash(npx tsc:*)",
+      "Bash(ls:*)",
+      "Bash(npx --yes sharp-cli:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(taskkill:*)",
+      "Bash(curl:*)",
+      "Bash(netstat:*)"
+    ]
+  }
+}
